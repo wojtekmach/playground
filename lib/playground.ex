@@ -1,8 +1,13 @@
 defmodule Playground do
+  @doc false
+  def tmp_dir() do
+    Path.join(System.tmp_dir(), "elixir_playground")
+  end
+
   def start(deps) when is_list(deps) do
     namespace = "default"
     dirname = namespace <> Base.encode16(:erlang.md5(inspect(deps)))
-    project_path = Path.join([System.tmp_dir(), "elixir_playground", dirname])
+    project_path = Path.join([tmp_dir(), dirname])
 
     if File.dir?(project_path) do
       :ok
@@ -27,6 +32,8 @@ defmodule Playground do
       true = Code.append_path(path)
       {:ok, _} = Application.ensure_all_started(app)
     end
+
+    :ok
   end
 
   defp mix(args) do
