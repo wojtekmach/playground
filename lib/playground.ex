@@ -10,19 +10,20 @@ defmodule Playground do
   end
 
   def start(deps) when is_list(deps) do
-    unless enabled?() do
+    if not enabled?() and unquote(Mix.env() == :prod) do
       raise "cannot use within a Mix project"
     end
 
     namespace = "default"
     md5 = :erlang.md5(inspect(Enum.sort(deps)))
-    dirname = namespace <> Base.encode16(md5)
+    dirname = namespace <> "_" <> Base.encode16(md5)
     project_path = Path.join([tmp_dir(), dirname])
 
     if File.dir?(project_path) do
       :ok
     else
-      File.mkdir_p!(project_path)
+      {:ok, _} = Application.ensure_all_started(:mix)
+      Mix.Generator.create_directory(project_path)
       app = :"playground_#{namespace}"
       module = :"Elixir.Playground#{Macro.camelize(namespace)}"
 
@@ -36,10 +37,15 @@ defmodule Playground do
       end)
     end
 
-    for path <- Path.wildcard("#{project_path}/_build/prod/**/ebin") do
-      app = path |> Path.split() |> Enum.at(-2) |> String.to_atom()
+    apps =
+      for path <- Path.wildcard("#{project_path}/_build/prod/**/ebin") do
+        app = path |> Path.split() |> Enum.at(-2) |> String.to_atom()
 
-      true = Code.append_path(path)
+        true = Code.append_path(path)
+        app
+      end
+
+    for app <- apps do
       {:ok, _} = Application.ensure_all_started(app)
     end
 
