@@ -6,7 +6,8 @@ defmodule Playground do
 
   def start(deps) when is_list(deps) do
     namespace = "default"
-    dirname = namespace <> Base.encode16(:erlang.md5(inspect(deps)))
+    md5 = :erlang.md5(inspect(Enum.sort(deps)))
+    dirname = namespace <> Base.encode16(md5)
     project_path = Path.join([tmp_dir(), dirname])
 
     if File.dir?(project_path) do
