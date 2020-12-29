@@ -4,7 +4,16 @@ defmodule Playground do
     Path.join(System.tmp_dir(), "elixir_playground")
   end
 
+  @doc false
+  def enabled?() do
+    List.keyfind(Application.started_applications(), :mix, 0) == nil
+  end
+
   def start(deps) when is_list(deps) do
+    unless enabled?() do
+      raise "cannot use within a Mix project"
+    end
+
     namespace = "default"
     md5 = :erlang.md5(inspect(Enum.sort(deps)))
     dirname = namespace <> Base.encode16(md5)
